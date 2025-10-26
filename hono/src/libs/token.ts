@@ -1,11 +1,10 @@
 import { Context } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
-import { D1QB } from "workers-qb";
 import bcrypt from "bcryptjs";
 
 import { Bindings, error, success } from "./utils";
-import { D1Database } from "@cloudflare/workers-types";
+import { Connection } from "mariadb";
 
 export const hashToken = (token: string) => {
   return bcrypt.hashSync(token, 10);
@@ -24,9 +23,7 @@ export const setCookieToken = (c: Context, idToken: string) => {
   });
 };
 
-const authorizeUser = async (idToken: string | undefined, DB: D1Database) => {
-  const qb = new D1QB(DB);
-
+const authorizeUser = async (idToken: string | undefined, DB: Connection) => {
   // トークンを検証
   if (!idToken) {
     return error("Token not found", 401);
@@ -44,22 +41,17 @@ const authorizeUser = async (idToken: string | undefined, DB: D1Database) => {
   }
 
   // ユーザを検索
-  const userResult = await qb
-    .fetchOne<{ hashed_token: string }>({
-      tableName: "user",
-      fields: ["id", "hashed_token"],
-      where: {
-        conditions: "id = ?",
-        params: [userId],
-      },
-    })
-    .execute();
-  if (!userResult.results) {
+  const query = `SELECT id, hashed_token FROM user WHERE id = ?`;
+  const userResult = await DB.query<{ id: string; hashed_token: string }[]>(
+    query,
+    [userId]
+  );
+  if (userResult.length === 0) {
     return error("Invalid token", 401);
   }
 
   // トークンを検証
-  const hashedToken = userResult.results.hashed_token;
+  const hashedToken = userResult[0].hashed_token;
   if (!bcrypt.compareSync(token, hashedToken)) {
     return error("Invalid token", 401);
   }

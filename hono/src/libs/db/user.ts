@@ -1,5 +1,4 @@
-import { D1Database } from "@cloudflare/workers-types";
-import { D1QB, Primitive } from "workers-qb";
+import { Connection } from "mariadb";
 
 export type Visibility = "public" | "private" | "internal";
 
@@ -58,7 +57,7 @@ const dbToUserWithCheckin = (dbUser: DBUserWithCheckin): UserWithCheckin => ({
 
 // user
 export const fetchAllUsers = async (
-  DB: D1Database,
+  DB: Connection,
   checkinDate: {
     year: number;
     month: number;
@@ -66,68 +65,40 @@ export const fetchAllUsers = async (
     hours: number;
   }
 ) => {
-  const qb = new D1QB(DB);
-  const checkinConditions = [
-    "count > 0",
-    "checkin.year = ?",
-    "checkin.month = ?",
-    "checkin.day = ?",
-    "checkin.hours = ?",
-  ];
-  const checkinParams: Primitive[] = [
+  const userFieldsSelect = dbUserFields
+    .map((field) => `user.${field}`)
+    .join(", ");
+  const query = `
+    SELECT ${userFieldsSelect}, checkin.location_id
+    FROM user
+    LEFT JOIN checkin ON user.id = checkin.user_id
+      AND checkin.count > 0
+      AND checkin.year = ?
+      AND checkin.month = ?
+      AND checkin.day = ?
+      AND checkin.hours = ?
+    WHERE user.listed = 1
+  `;
+  const params = [
     checkinDate.year,
     checkinDate.month,
     checkinDate.day,
     checkinDate.hours,
   ];
-
-  const { results } = await qb
-    .fetchAll<DBUserWithCheckin>({
-      tableName: "user",
-      fields: [
-        ...dbUserFields.map((field) => `user.${field}`),
-        "checkin.location_id",
-      ],
-      join: {
-        type: "LEFT",
-        table: {
-          tableName: "checkin",
-          fields: ["user_id", "count", "location_id"],
-          where: {
-            conditions: checkinConditions.join(" AND "),
-            params: checkinParams,
-          },
-        },
-        alias: "checkin",
-        on: "user.id = checkin.user_id",
-      },
-      where: {
-        conditions: "listed == 1",
-        params: checkinParams,
-      },
-    })
-    .execute();
-
-  if (!results) {
-    return [];
-  }
+  const results = await DB.query<DBUserWithCheckin[]>(query, params);
   return results.map(dbToUserWithCheckin);
 };
 
 export const fetchUser = async (
   { type, value }: { type: "id" | "screen_name"; value: string },
-  DB: D1Database
+  DB: Connection
 ) => {
-  const qb = new D1QB(DB);
   const conditions = type === "id" ? "id = ?" : "screen_name = ?";
-  const { results } = await qb
-    .fetchOne<DBUser>({
-      tableName: "user",
-      fields: dbUserFields,
-      where: { conditions, params: [value] },
-    })
-    .execute();
-  return results ? dbToUser(results) : null;
+  const query = `SELECT ${dbUserFields.join(
+    ", "
+  )} FROM user WHERE ${conditions}`;
+  const results = await DB.query<DBUser[]>(query, [value]);
+  return results.length > 0 ? dbToUser(results[0]) : null;
 };
 
 export const insertUser = async (
@@ -139,24 +110,19 @@ export const insertUser = async (
   listed: boolean,
   displaysPast: boolean,
   hashedToken: string,
-  DB: D1Database
+  DB: Connection
 ) => {
-  const qb = new D1QB(DB);
-  await qb
-    .insert({
-      tableName: "user",
-      data: {
-        id,
-        screen_name: screenName,
-        name: name,
-        message: message,
-        visibility: visibility,
-        listed: listed,
-        displays_past: displaysPast,
-        hashed_token: hashedToken,
-      },
-    })
-    .execute();
+  const query = `INSERT INTO user (id, screen_name, name, message, visibility, listed, displays_past, hashed_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+  await DB.query(query, [
+    id,
+    screenName,
+    name,
+    message,
+    visibility,
+    listed ? 1 : 0,
+    displaysPast ? 1 : 0,
+    hashedToken,
+  ]);
 };
 
 export const updateUser = async (
@@ -178,36 +144,43 @@ export const updateUser = async (
     displaysPast?: boolean;
     hashedToken?: string;
   },
-  DB: D1Database
+  DB: Connection
 ) => {
-  const qb = new D1QB(DB);
-  const newData: Record<string, Primitive> = {};
+  const updates: string[] = [];
+  const params: any[] = [];
+
   if (screenName !== undefined) {
-    newData.screen_name = screenName;
+    updates.push("screen_name = ?");
+    params.push(screenName);
   }
   if (name !== undefined) {
-    newData.name = name;
+    updates.push("name = ?");
+    params.push(name);
   }
   if (message !== undefined) {
-    newData.message = message;
+    updates.push("message = ?");
+    params.push(message);
   }
   if (visibility !== undefined) {
-    newData.visibility = visibility;
+    updates.push("visibility = ?");
+    params.push(visibility);
   }
   if (listed !== undefined) {
-    newData.listed = listed;
+    updates.push("listed = ?");
+    params.push(listed ? 1 : 0);
   }
   if (displaysPast !== undefined) {
-    newData.displays_past = displaysPast;
+    updates.push("displays_past = ?");
+    params.push(displaysPast ? 1 : 0);
   }
   if (hashedToken !== undefined) {
-    newData.hashed_token = hashedToken;
+    updates.push("hashed_token = ?");
+    params.push(hashedToken);
   }
-  await qb
-    .update({
-      tableName: "user",
-      data: newData,
-      where: { conditions: "id = ?", params: [id] },
-    })
-    .execute();
+
+  if (updates.length === 0) return;
+
+  const query = `UPDATE user SET ${updates.join(", ")} WHERE id = ?`;
+  params.push(id);
+  await DB.query(query, params);
 };

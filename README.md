@@ -52,21 +52,7 @@ launchd を用いて上記コマンドを定期実行できます
   - `/api` に API を、その他にフロントエンドをルーティングします
 
 ```bash
-cd frontend
-yarn
-yarn run watch  # hono/dist に自動ビルド
-
-cd hono
-cp wrangler.jsonc.sample wrangler.jsonc
-yarn
-yarn run dev
-
-# デプロイ
-cd frontend
-yarn run build
-
-cd hono
-yarn run deploy
+docker compose up --build
 ```
 
 ## ライセンス

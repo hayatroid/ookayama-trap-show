@@ -1,12 +1,12 @@
-import { D1Database, KVNamespace } from "@cloudflare/workers-types";
 import dayjs from "dayjs";
 import { Context } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 import { cidrSubnet } from "ip";
+import { Connection } from "mariadb";
+import { getConnInfo } from "@hono/node-server/conninfo";
 
 export interface Bindings {
-  ASSETS: KVNamespace;
-  DB: D1Database;
+  DB: Connection;
 }
 
 interface Success<T> {
@@ -39,7 +39,7 @@ export const error = (
 export const screenNameRegexStr = "[a-z0-9_]{4,16}";
 
 export const getIP = (c: Context) => {
-  return c.req.header("CF-Connecting-IP") ?? "undefined";
+  return getConnInfo(c).remote.address ?? "undefined";
 };
 
 export const isInternalIP = (ip: string) => {

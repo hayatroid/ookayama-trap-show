@@ -1,5 +1,4 @@
-import { D1Database } from "@cloudflare/workers-types";
-import { D1QB, Primitive } from "workers-qb";
+import { Connection } from "mariadb";
 
 interface DBCheckin {
   id: number;
@@ -44,11 +43,10 @@ export const fetchCheckins = async (
     hours?: number;
     locationId?: string;
   },
-  DB: D1Database
+  DB: Connection
 ) => {
-  const qb = new D1QB(DB);
   const conditions = ["user_id = ?"];
-  const params: Primitive[] = [userId];
+  const params: any[] = [userId];
   if (options.year !== undefined) {
     conditions.push("year = ?");
     params.push(options.year);
@@ -69,17 +67,11 @@ export const fetchCheckins = async (
     conditions.push("location_id = ?");
     params.push(options.locationId);
   }
-  const result = await qb
-    .fetchAll<DBCheckin>({
-      tableName: "checkin",
-      fields: checkinFields,
-      where: {
-        conditions: conditions.join(" AND "),
-        params,
-      },
-    })
-    .execute();
-  return result.results?.map(dbToCheckin) ?? [];
+  const query = `SELECT ${checkinFields.join(
+    ", "
+  )} FROM checkin WHERE ${conditions.join(" AND ")}`;
+  const result = await DB.query<DBCheckin[]>(query, params);
+  return result.map(dbToCheckin);
 };
 
 export const insertCheckin = async (
@@ -89,36 +81,17 @@ export const insertCheckin = async (
   day: number,
   hours: number,
   locationId: string,
-  DB: D1Database
+  DB: Connection
 ) => {
-  const qb = new D1QB(DB);
-  await qb
-    .insert({
-      tableName: "checkin",
-      data: {
-        user_id: userId,
-        year,
-        month,
-        day,
-        hours,
-        location_id: locationId,
-        count: 1,
-      },
-    })
-    .execute();
+  const query = `INSERT INTO checkin (user_id, year, month, day, hours, location_id, count) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  await DB.query(query, [userId, year, month, day, hours, locationId, 1]);
 };
 
 export const updateCheckin = async (
   id: number,
   count: number,
-  DB: D1Database
+  DB: Connection
 ) => {
-  const qb = new D1QB(DB);
-  await qb
-    .update({
-      tableName: "checkin",
-      data: { count },
-      where: { conditions: "id = ?", params: [id] },
-    })
-    .execute();
+  const query = `UPDATE checkin SET count = ? WHERE id = ?`;
+  await DB.query(query, [count, id]);
 };
