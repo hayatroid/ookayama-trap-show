@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Author>hayatroid</Author>
+    <URI>\show.trap.ookayama</URI>
+  </RegistrationInfo>
+
+  <Triggers>
+    <CalendarTrigger>
+      <Repetition>
+        <Interval>PT2M</Interval>
+        <Duration>P1D</Duration>
+        <StopAtDurationEnd>false</StopAtDurationEnd>
+      </Repetition>
+      <StartBoundary>2025-01-01T00:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByDay>
+        <DaysInterval>1</DaysInterval>
+      </ScheduleByDay>
+    </CalendarTrigger>
+  </Triggers>
+
+  <Actions Context="Author">
+    <Exec>
+      <Command>curl</Command>
+      <Arguments>-X POST -H "Authorization: $YOUR_TOKEN" https://ookayama.trap.show/api/checkins</Arguments>
+    </Exec>
+  </Actions>
+</Task>

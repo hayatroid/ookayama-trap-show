@@ -40,6 +40,14 @@ launchd を用いて上記コマンドを定期実行できます
 2. `$YOUR_TOKEN` を書き換えた上で `~/Library/LaunchAgents` に保存します
 3. `launchctl load ~/Library/LaunchAgents/show.trap.ookayama.plist` を実行します
 
+#### Windows を使用している場合
+
+タスクスケジューラを用いて上記コマンドを定期実行できます
+
+1. `show.trap.ookayama.xml` をダウンロードします
+2. `$YOUR_TOKEN` を書き換えた上で適当な場所に保存します
+3. タスクスケジューラから保存したタスクをインポートします
+
 ### 記録の確認
   - <https://ookayama.trap.show/@screenname> から確認できます
 
