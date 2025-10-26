@@ -1,8 +1,8 @@
-# tsukuba.yokohama.dev
+# ookayama.trap.show
 
-筑波大学にいるかいないかを記録・公開する Web サイト
+東京科学大学にいるかいないかを記録・公開する Web サイト
 
-<https://tsukuba.yokohama.dev>
+<https://ookayama.trap.show>
 
 ## 仕様・使い方
 
@@ -26,7 +26,7 @@
 ### 記録
 - 以下の POST リクエストを送信してください
   ```bash
-  curl -X POST https://tsukuba.yokohama.dev/api/checkins \
+  curl -X POST https://ookayama.trap.show/api/checkins \
     -H "Authorization: <YOUR_TOKEN>"
   ```
   - レートリミット（100 回/時間）を設けています
@@ -36,12 +36,12 @@
 
 launchd を用いて上記コマンドを定期実行できます
 
-1. `dev.yokohama.tsukuba.plist` をダウンロードします
+1. `show.trap.ookayama.plist` をダウンロードします
 2. `$YOUR_TOKEN` を書き換えた上で `~/Library/LaunchAgents` に保存します
-3. `launchctl load ~/Library/LaunchAgents/dev.yokohama.tsukuba.plist` を実行します
+3. `launchctl load ~/Library/LaunchAgents/show.trap.ookayama.plist` を実行します
 
 ### 記録の確認
-  - <https://tsukuba.yokohama.dev/@screenname> から確認できます
+  - <https://ookayama.trap.show/@screenname> から確認できます
 
 ## 開発
 

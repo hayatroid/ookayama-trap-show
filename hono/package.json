@@ -1,5 +1,5 @@
 {
-  "name": "tsukuba-yokohama-dev",
+  "name": "ookayama-trap-show",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts"

@@ -123,14 +123,14 @@ const TopPage = () => {
       <List>
         {allUsers.map((user) => {
           const status =
-            user.latestLocationId === "utsukuba"
+            user.latestLocationId === "isct"
               ? "internal"
               : user.latestLocationId === "others"
               ? "others"
               : "inactive";
           const statusText =
             status === "internal"
-              ? "筑波大学"
+              ? "東京科学大学"
               : status === "others"
               ? "学外"
               : "不明";
