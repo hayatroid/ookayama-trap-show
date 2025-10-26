@@ -2,6 +2,7 @@ import { D1Database, KVNamespace } from "@cloudflare/workers-types";
 import dayjs from "dayjs";
 import { Context } from "hono";
 import { ContentfulStatusCode } from "hono/utils/http-status";
+import { cidrSubnet } from "ip";
 
 export interface Bindings {
   ASSETS: KVNamespace;
@@ -42,8 +43,7 @@ export const getIP = (c: Context) => {
 };
 
 export const isInternalIP = (ip: string) => {
-  const prefixes = ["130.158.", "133.51."];
-  return prefixes.some((prefix) => ip.startsWith(prefix));
+  return cidrSubnet("131.112.127.0/26").contains(ip);
 };
 
 export const getNow = () => {
