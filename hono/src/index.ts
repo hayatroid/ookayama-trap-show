@@ -43,6 +43,14 @@ app.route("/api/users/me", usersMeProtected);
 app.route("/api/users/me", usersMePublic);
 app.route("/api/users", users);
 
+app.get("/debug", (c) => {
+  const headers: Record<string, string> = {};
+  c.req.raw.headers.forEach((value, key) => {
+    headers[key] = value;
+  });
+  return c.json(headers);
+});
+
 app.use("/*", serveStatic({ root: "./dist" }));
 app.get("/*", serveStatic({ path: "./dist/index.html" }));
 
