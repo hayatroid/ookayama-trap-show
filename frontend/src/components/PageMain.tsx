@@ -11,7 +11,8 @@ const Wrapper = styled.div`
   min-height: 100dvh;
   flex-shrink: 0;
   margin: 0 auto;
-  padding: 16px 0 48px 0;
+  padding: 16px 0 16px 0;
+  display: flex;
   flex-direction: column;
   background: #fff;
   box-sizing: border-box;
@@ -40,6 +41,10 @@ const Header = styled.header`
       text-decoration: underline;
     }
   }
+`;
+
+const Main = styled.div`
+  flex: 1;
 `;
 
 const Footer = styled.footer`
@@ -117,10 +122,12 @@ const PageMain = ({ wrapperRef, ref }: PageMainProps) => {
             GitHub ／ 使い方
           </a>
         </Header>
-        <Routes>
-          <Route path="/" element={<TopPage />} />
-          <Route path="/:screenName" element={<UserPage />} />
-        </Routes>
+        <Main>
+          <Routes>
+            <Route path="/" element={<TopPage />} />
+            <Route path="/:screenName" element={<UserPage />} />
+          </Routes>
+        </Main>
         <Footer>
           <Right>
             <MapLink href="https://www.google.com/maps/dir/?api=1&origin=titech+museum&destination=tsukuba+amanogawa">
